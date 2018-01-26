@@ -1,0 +1,9 @@
+[submodule "lib/RF24"]
+	path = lib/RF24
+	url = git@github.com:nRF24/RF24.git
+[submodule "lib/RF24Network"]
+	path = lib/RF24Network
+	url = git@github.com:nRF24/RF24Network.git
+[submodule "lib/RF24Mesh"]
+	path = lib/RF24Mesh
+	url = git@github.com:nRF24/RF24Mesh.git
