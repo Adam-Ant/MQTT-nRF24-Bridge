@@ -1,26 +1,14 @@
- /** RF24Mesh_Example_Master.ino by TMRh20
-  *
-  *
-  * This example sketch shows how to manually configure a node via RF24Mesh as a master node, which
-  * will receive all data from sensor nodes.
-  *
-  * The nodes can change physical or logical position in the network, and reconnect through different
-  * routing nodes as required. The master node manages the address assignments for the individual nodes
-  * in a manner similar to DHCP.
-  *
-  */
-
-
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+
+#include <ArduinoJson.h>
+#include "FS.h"
 
 #include "RF24Network.h"
 #include "RF24.h"
 #include "RF24Mesh.h"
 #include <SPI.h>
-//Include eeprom.h for AVR (Uno, Nano) etc. except ATTiny
-#include <EEPROM.h>
 
 const char* ssid = "XXXX";
 const char* password = "XXXX";
@@ -31,8 +19,6 @@ RF24Network network(radio);
 RF24Mesh mesh(radio,network);
 
 ESP8266WebServer http(80);
-
-uint32_t displayTimer = 0;
 
 String webpage = "";
 
@@ -59,7 +45,7 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   // Setup the web server
-  http.on("/", [](){
+  http.on("/clients", [](){
     webpage = "<h1>Connected Clients:</h1><br>";
     for(int i=0; i<mesh.addrListTop; i++){
       webpage += "<b>NodeId: </b>";
@@ -70,7 +56,17 @@ void setup() {
     http.send(200, "text/html", webpage);
   });
 
+  http.serveStatic("/", SPIFFS, "/index.html");
+
   http.begin();
+
+  if (!SPIFFS.begin()) {
+    Serial.println("Failed to mount file system");
+    return;
+  }
+
+//TODO: Add SPiffs web site. JQuery to jsonify and post. Post JSON data, parse and validate, and store. Call load function to load it into arrays. MQTT message routing. Connected clients on wesbite, js to update
+
 
 }
 
@@ -97,18 +93,5 @@ void loop() {
       case 'M': network.read(header,&dat,sizeof(dat)); Serial.println(dat); break;
       default: network.read(header,0,0); Serial.println(header.type);break;
     }
-  }
-
-  if(millis() - displayTimer > 5000){
-    displayTimer = millis();
-    Serial.println(" ");
-    Serial.println(F("********Assigned Addresses********"));
-     for(int i=0; i<mesh.addrListTop; i++){
-       Serial.print("NodeID: ");
-       Serial.print(mesh.addrList[i].nodeID);
-       Serial.print(" RF24Network Address: 0");
-       Serial.println(mesh.addrList[i].address,OCT);
-     }
-    Serial.println(F("**********************************"));
   }
 }

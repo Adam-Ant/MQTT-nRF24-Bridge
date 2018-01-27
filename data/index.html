@@ -1,0 +1,40 @@
+<html>
+<head>
+  <title>ESP8266 Input Example</title>
+  <style>
+    body {
+      background-color: #E6E6FA;
+      font-family: Arial, Helvetica, Sans-Serif;
+      Color: blue;
+    }
+  </style>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+
+
+  <script type="text/javascript">
+    var counter = 1;
+    function addInput(tableName){
+      var newrow = document.createElement('tr');
+      newrow.innerHTML = "<td><input type='text' name='mqtt" + counter + "'></td><td><input type='text' name='node" + counter + "'></td>"
+      document.getElementById(tableName).appendChild(newrow);
+      counter++;
+    }
+  </script>
+</head>
+
+<body>
+  <h1><br>ESP8266 Server - Getting input from a client</h1>
+  <form action='/submit' method='POST'>
+    <table id='dynamicInput'>
+      <tr>
+        <th>MQTT Address</th>
+        <th>Node ID</th>
+      </tr>
+      <tr><td><input type='text' name='mqtt0'></td><td><input type='text' name='node0'></td></tr>
+    </table>
+    <input type='submit' value='Enter'> <input type="button" value="Add another text input" onClick="addInput('dynamicInput');">
+  </form>
+</body>
+</html>
