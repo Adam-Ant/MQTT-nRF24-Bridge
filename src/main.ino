@@ -19,8 +19,54 @@ RF24Network network(radio);
 RF24Mesh mesh(radio,network);
 
 ESP8266WebServer http(80);
-
 String webpage = "";
+
+bool saveData() {
+  if (http.args() > 0) { // We have some arguments
+    bool foundData = false;
+    int argPos;
+
+    // Verify the json, and load it into spiffs
+    for ( uint8_t i = 0; i < http.args(); i++ ) {
+      if (http.argName(i) == "mqtt0") { //TODO - Replace with actual post data field name
+        argPos = i; //Log its place to load later
+        foundData = true;
+      }
+    }
+
+    if (!foundData) {
+      Serial.println("POST argument not found");
+      return false;
+    }
+
+    DynamicJsonBuffer jsonBuff;
+    JsonObject& json = jsonBuff.parseObject(http.arg(argPos));
+    if (!json.success()) {
+      // Bad json. Dont write to file
+      Serial.println("Bad JSON from web!");
+      return false;
+    }
+
+    File routingFile = SPIFFS.open("/routes.json", "w");
+    if (!routingFile) {
+      Serial.println("Failed to open route file file for writing");
+      return false;
+    }
+
+    json.printTo(routingFile);
+    routingFile.close();
+
+    json.prettyPrintTo(Serial);
+    // Redirect back to the home page using a get request
+    http.sendHeader("Location", "/", true);
+    http.send(303, "text/plain", "");
+  }
+
+  else {
+    Serial.println("No Arguments sent");
+    http.send(200, "text/html", "No data"); //TODO -  better status code, or handle this outside of this function?
+  }
+}
 
 
 void setup() {
@@ -32,6 +78,11 @@ void setup() {
   Serial.println("Starting......  ");
   // Connect to the mesh
   mesh.begin();
+
+  if (!SPIFFS.begin()) {
+    Serial.println("Failed to mount file system");
+    return;
+  }
 
   WiFi.begin(ssid, password);
 
@@ -57,13 +108,9 @@ void setup() {
   });
 
   http.serveStatic("/", SPIFFS, "/index.html");
-
+  http.on("/post", saveData);
   http.begin();
 
-  if (!SPIFFS.begin()) {
-    Serial.println("Failed to mount file system");
-    return;
-  }
 
 //TODO: Add SPiffs web site. JQuery to jsonify and post. Post JSON data, parse and validate, and store. Call load function to load it into arrays. MQTT message routing. Connected clients on wesbite, js to update
 
